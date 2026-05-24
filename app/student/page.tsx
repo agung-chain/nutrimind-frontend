@@ -68,7 +68,7 @@ async function loadProfile() {
     <div className="min-h-screen bg-gray-100 pb-24">
 
       {/* HEADER */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-b-3xl shadow-lg">
+      <div className="mx-4 mt-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-3xl shadow-lg">
         <h1 className="text-2xl font-bold">
           Halo, {profile?.name || "Siswa"} 👋
         </h1>
