@@ -1,5 +1,6 @@
 "use client";
-
+import { supabase }
+from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import StudentBottomNav
@@ -7,14 +8,37 @@ from "@/components/StudentBottomNav";
 export default function StudentHome() {
   const router = useRouter();
 
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] =
+    useState<any>(null);
 
   useEffect(() => {
-    const data = localStorage.getItem("student_profile");
-    if (data) {
-      setProfile(JSON.parse(data));
-    }
+
+    loadProfile();
+
   }, []);
+
+async function loadProfile() {
+
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const data =
+    localStorage.getItem(
+      `profile_${user.email}`
+    );
+
+  if (data) {
+
+    setProfile(
+      JSON.parse(data)
+    );
+
+  }
+
+}
 
   return (
     <div className="min-h-screen bg-gray-100 pb-24">
