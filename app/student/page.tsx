@@ -7,16 +7,40 @@ import StudentBottomNav
 from "@/components/StudentBottomNav";
 export default function StudentHome() {
   const router = useRouter();
-
+  const [latestCheckin, setLatestCheckin] =
+    useState<any>(null);
   const [profile, setProfile] =
     useState<any>(null);
 
   useEffect(() => {
 
     loadProfile();
+    loadLatestCheckin();
 
   }, []);
 
+async function loadLatestCheckin() {
+
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const data =
+    localStorage.getItem(
+      `wellness_${user.email}`
+    );
+
+  if (data) {
+
+    setLatestCheckin(
+      JSON.parse(data)
+    );
+
+  }
+
+}
 async function loadProfile() {
 
   const {
@@ -54,34 +78,56 @@ async function loadProfile() {
       </div>
 
       {/* STATUS CARD */}
-      <div className="p-4 -mt-10">
-        <div className="bg-white rounded-3xl shadow-lg p-6">
-          <h2 className="text-lg font-bold mb-2">
-            Status Kesehatan Kamu 🧠
-          </h2>
+      <div className="flex justify-between mt-4">
 
-          <div className="flex justify-between mt-4">
-            <div className="text-center">
-              <p className="text-2xl">😊</p>
-              <p className="text-sm text-gray-500">Mood</p>
-            </div>
+        <div className="text-center">
+          <p className="text-2xl">😊</p>
 
-            <div className="text-center">
-              <p className="text-2xl">😴</p>
-              <p className="text-sm text-gray-500">Sleep</p>
-            </div>
+          <p className="font-bold">
+            {latestCheckin?.mood || "-"}
+          </p>
 
-            <div className="text-center">
-              <p className="text-2xl">🏃</p>
-              <p className="text-sm text-gray-500">Sport</p>
-            </div>
-
-            <div className="text-center">
-              <p className="text-2xl">🧠</p>
-              <p className="text-sm text-gray-500">Mind</p>
-            </div>
-          </div>
+          <p className="text-sm text-gray-500">
+            Mood
+          </p>
         </div>
+
+        <div className="text-center">
+          <p className="text-2xl">😴</p>
+
+          <p className="font-bold">
+            {latestCheckin?.sleep_hours || 0} Jam
+          </p>
+
+          <p className="text-sm text-gray-500">
+            Sleep
+          </p>
+        </div>
+
+        <div className="text-center">
+          <p className="text-2xl">🏃</p>
+
+          <p className="font-bold">
+            {latestCheckin?.exercise_minutes || 0} Min
+          </p>
+
+          <p className="text-sm text-gray-500">
+            Sport
+          </p>
+        </div>
+
+        <div className="text-center">
+          <p className="text-2xl">🧠</p>
+
+          <p className="font-bold">
+            {latestCheckin?.stress_level || 0}
+          </p>
+
+          <p className="text-sm text-gray-500">
+            Mind
+          </p>
+        </div>
+
       </div>
 
       {/* QUICK MENU */}
