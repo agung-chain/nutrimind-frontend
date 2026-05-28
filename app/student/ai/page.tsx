@@ -46,27 +46,18 @@ export default function AIPage() {
 
       // 🔥 AMBIL PROFILE
 
-      const profile =
-        JSON.parse(
-
-          localStorage.getItem(
-            `profile_${user.email}`
-          ) || "{}"
-
-        );
-
+      const profile = JSON.parse(
+        localStorage.getItem("profile") || "{}"
+           );
+      console.log(profile);
       // 🔥 GENERATE STUDENT UID
 
       const student_uid =
-
-        `${profile.school_code}-${profile.nis}`;
+        profile.student_uid;
 
       // 🔥 FETCH AI ANALYSIS
-
       const res = await fetch(
-
         `${process.env.NEXT_PUBLIC_API_URL}/student-ai/${student_uid}`
-
       );
 
       const data = await res.json();

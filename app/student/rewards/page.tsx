@@ -31,204 +31,154 @@ export default function RewardsPage() {
 
   async function loadRewards() {
 
-    try {
+  setLoading(true);
 
-      // 🔥 PROFILE
+  try {
 
-      const profile =
-        JSON.parse(
+   // 🔥 LOAD PROFILE
+    const rawProfile =
+      localStorage.getItem("profile");
 
-          localStorage.getItem(
-            "student_profile"
-          ) || "{}"
+    if (!rawProfile) {
 
-        );
+      setError("Profile tidak ditemukan");
+      return;
+    }
 
-      // 🔥 STUDENT UID
+    const profile =
+      JSON.parse(rawProfile);
 
-      const student_uid =
+    console.log("PROFILE:", profile);
 
-        `${profile.school_code}-${profile.nis}`;
+    // 🔥 STUDENT UID
+    const student_uid =
+      profile?.student_uid;
 
-      // 🔥 FETCH AI
+    if (!student_uid) {
 
-      const res = await fetch(
+      setError("student_uid tidak ada");
+      return;
+    }
 
-        `${process.env.NEXT_PUBLIC_API_URL}/student-ai/${student_uid}`
+    // 🔥 FETCH AI
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/student-ai/${student_uid}`
+    );
 
-      );
+    const data = await res.json();
 
-      const data = await res.json();
+    console.log("AI DATA:", data.data);
 
-      console.log(data);
+    // 🔥 NO DATA
+    if (data.data.status === "no_data") {
 
-      // 🔥 NO DATA
+      setError("Belum ada check-in 😢");
+      return;
+    }
 
-      if (
-        data.status === "no_data"
-      ) {
+    // 🔥 SCORE
+    const score = data.data.health_score || 0;
+    console.log("AI DATA :", data);
 
-        setError(
-          "Belum ada check-in 😢"
-        );
+    setHealthScore(score || 0);
+    // 🔥 AI SOURCE
+    setAiSource(data.data.ai_source || "Local AI");
 
-        setLoading(false);
+    // 🔥 REWARD ENGINE
+    const generatedRewards = [];
 
-        return;
-      }
+    // =====================================
+    // HEALTH SCORE BADGE
+    // =====================================
 
-      // 🔥 SCORE
-
-      const score =
-        data.health_score || 0;
-
-      setHealthScore(score);
-
-      // 🔥 AI SOURCE
-
-      setAiSource(
-        data.ai_source || "local_ai"
-      );
-
-      // 🔥 REWARD ENGINE
-
-      const generatedRewards = [];
-
-      // =====================================
-      // HEALTH SCORE BADGE
-      // =====================================
-
-      if (score >= 80) {
-
-        generatedRewards.push({
-
-          title:
-            "Healthy Champion",
-
-          icon:
-            "🏆",
-
-          desc:
-            "Kesehatan kamu luar biasa minggu ini!"
-
-        });
-
-      }
-
-      if (score >= 60) {
-
-        generatedRewards.push({
-
-          title:
-            "Wellness Hero",
-
-          icon:
-            "🌟",
-
-          desc:
-            "Tubuh dan pikiran kamu cukup stabil."
-
-        });
-
-      }
-
-      // =====================================
-      // SLEEP REWARD
-      // =====================================
-
-      if (score >= 50) {
-
-        generatedRewards.push({
-
-          title:
-            "Sleep Guardian",
-
-          icon:
-            "😴",
-
-          desc:
-            "Pola tidur kamu cukup baik."
-
-        });
-
-      }
-
-      // =====================================
-      // EXERCISE REWARD
-      // =====================================
-
-      if (score >= 40) {
-
-        generatedRewards.push({
-
-          title:
-            "Fitness Explorer",
-
-          icon:
-            "🏃",
-
-          desc:
-            "Kamu tetap aktif dan bergerak."
-
-        });
-
-      }
-
-      // =====================================
-      // WATER REWARD
-      // =====================================
-
-      if (score >= 30) {
-
-        generatedRewards.push({
-
-          title:
-            "Hydration Buddy",
-
-          icon:
-            "💧",
-
-          desc:
-            "Tubuh kamu cukup terhidrasi."
-
-        });
-
-      }
-
-      // =====================================
-      // MOTIVATION REWARD
-      // =====================================
+    if (score >= 80) {
 
       generatedRewards.push({
-
-        title:
-          "Never Give Up",
-
-        icon:
-          "🚀",
-
-        desc:
-          "Tetap semangat menjalani hari-harimu!"
-
+        title: "Healthy Champion",
+        icon: "🏆",
+        desc: "Kesehatan kamu luar biasa minggu ini!"
       });
-
-      setRewards(
-        generatedRewards
-      );
-
-    } catch (err: any) {
-
-      console.error(err);
-
-      setError(
-        "Gagal mengambil reward"
-      );
 
     }
 
-    setLoading(false);
-  }
+    if (score >= 60) {
 
+      generatedRewards.push({
+        title: "Wellness Hero",
+        icon: "🌟",
+        desc: "Tubuh dan pikiran kamu cukup stabil."
+      });
+
+    }
+
+    // =====================================
+    // SLEEP REWARD
+    // =====================================
+
+    if (score >= 50) {
+
+      generatedRewards.push({
+        title: "Sleep Guardian",
+        icon: "😴",
+        desc: "Pola tidur kamu cukup baik."
+      });
+
+    }
+
+    // =====================================
+    // EXERCISE REWARD
+    // =====================================
+
+    if (score >= 40) {
+
+      generatedRewards.push({
+        title: "Fitness Explorer",
+        icon: "🏃",
+        desc: "Kamu tetap aktif dan bergerak."
+      });
+
+    }
+
+    // =====================================
+    // WATER REWARD
+    // =====================================
+
+    if (score >= 30) {
+
+      generatedRewards.push({
+        title: "Hydration Buddy",
+        icon: "💧",
+        desc: "Tubuh kamu cukup terhidrasi."
+      });
+
+    }
+
+    // =====================================
+    // MOTIVATION REWARD
+    // =====================================
+
+    generatedRewards.push({
+      title: "Never Give Up",
+      icon: "🚀",
+      desc: "Tetap semangat menjalani hari-harimu!"
+    });
+
+    setRewards(generatedRewards);
+
+  } catch (err: any) {
+
+    console.error(err);
+
+    setError(
+      "Gagal mengambil reward"
+    );
+
+  } finally {
+
+    setLoading(false);
+
+  }
+}
   return (
 
     <div className="min-h-screen bg-gray-100 p-6 pb-28">

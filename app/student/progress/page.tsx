@@ -27,39 +27,44 @@ export default function ProgressPage() {
 
     try {
 
-      // 🔥 AMBIL PROFILE
+   // 🔥 LOAD PROFILE
+    const rawProfile =
+      localStorage.getItem("profile");
 
-      const profile =
-        JSON.parse(
+    if (!rawProfile) {
 
-          localStorage.getItem(
-            "student_profile"
-          ) || "{}"
+      setError("Profile tidak ditemukan");
+      return;
+    }
 
-        );
+    const profile =
+      JSON.parse(rawProfile);
 
-      // 🔥 STUDENT UID
+    console.log("PROFILE:", profile);
 
-      const student_uid =
+    // 🔥 STUDENT UID
+    const student_uid =
+      profile?.student_uid;
 
-        `${profile.school_code}-${profile.nis}`;
+    if (!student_uid) {
 
-      // 🔥 FETCH AI DATA
+      setError("student_uid tidak ada");
+      return;
+    }
 
-      const res = await fetch(
-
-        `${process.env.NEXT_PUBLIC_API_URL}/student-ai/${student_uid}`
-
-      );
+    // 🔥 FETCH AI
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/student-ai/${student_uid}`
+    );
 
       const data = await res.json();
 
-      console.log(data);
+      console.log(data.data);
 
       // 🔥 NO DATA
 
       if (
-        data.status === "no_data"
+        data.data.status === "no_data"
       ) {
 
         setError(
@@ -74,7 +79,7 @@ export default function ProgressPage() {
       // 🔥 AMBIL HEALTH SCORE
 
       const health =
-        data.health_score || 0;
+        data.data.health_score || 0;
 
       // 🔥 HITUNG PROGRESS
 

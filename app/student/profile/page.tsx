@@ -12,12 +12,14 @@ from "@/lib/supabase";
 import StudentBottomNav
 from "@/components/StudentBottomNav";
 
+
+
 export default function ProfilePage() {
 
   const router = useRouter();
 
-  const [user, setUser] =
-    useState<any>(null);
+  const [loading, setLoading] =
+    useState(false);
 
   // 🔥 PROFILE STATE
 
@@ -39,6 +41,9 @@ export default function ProfilePage() {
   const [weight, setWeight] =
     useState("");
 
+  const [user, setUser] =
+  useState<any>(null);
+
   useEffect(() => {
 
     loadUser();
@@ -54,81 +59,158 @@ export default function ProfilePage() {
     if (!user) {
 
       router.push("/login");
-
       return;
+
     }
 
     setUser(user);
-
-    const savedProfile =
-      localStorage.getItem(
-        `profile_${user.email}`
-      );
-
-    if (savedProfile) {
-
-      const profile =
-        JSON.parse(savedProfile);
-
-      setSchoolCode(
-        profile.school_code || ""
-      );
-
-      setNis(
-        profile.nis || ""
-      );
-
-      setName(
-        profile.name || ""
-      );
-
-      setAge(
-        profile.age || ""
-      );
-
-      setHeight(
-        profile.height || ""
-      );
-
-      setWeight(
-        profile.weight || ""
-      );
-    }
   }
+  // =========================
+  // INIT
+  // =========================
+
+  useEffect(() => {
+
+    loadProfile();
+
+  }, []);
+
+  async function loadProfile() {
+
+    // 🔥 AMBIL PROFILE CACHE
+
+    const raw =
+      localStorage.getItem("profile");
+
+    if (!raw) return;
+
+    const profile =
+      JSON.parse(raw);
+
+    setSchoolCode(
+      profile.school_code || ""
+    );
+
+    setNis(
+      profile.nis || ""
+    );
+
+    setName(
+      profile.name || ""
+    );
+
+    setAge(
+      profile.age || ""
+    );
+
+    setHeight(
+      profile.height || ""
+    );
+
+    setWeight(
+      profile.weight || ""
+    );
+  }
+
+  // =========================
+  // SAVE PROFILE
+  // =========================
 
   async function saveProfile() {
 
+  if (!user?.email) {
+
+    alert("User belum login");
+    return;
+
+  }
+
+  try {
+
+    // 🔥 KIRIM KE BACKEND
+    const response = await fetch(
+
+      `${process.env.NEXT_PUBLIC_API_URL}/save-profile`,
+
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+
+          email: user.email,
+
+          school_code: schoolCode,
+
+          nis: nis,
+
+          name: name,
+
+          age: age,
+
+          height: height,
+
+          weight: weight
+
+        })
+      }
+
+    );
+
+    const result =
+      await response.json();
+
+    console.log(result);
+
+    // 🔥 GAGAL
+    if (!result.success) {
+
+      alert("Gagal simpan profile");
+      return;
+
+    }
+
+    // 🔥 SIMPAN LOCAL PROFILE
     const profile = {
 
-      // 🔥 IDENTITAS SEKOLAH
+      email: user.email,
+
+      student_uid:
+        result.student_uid,
 
       school_code: schoolCode,
 
       nis: nis,
 
-      // 🔥 PROFILE SISWA
+      name: name,
 
-      name,
-      age,
-      height,
-      weight
+      age: age,
+
+      height: height,
+
+      weight: weight
 
     };
 
     localStorage.setItem(
-
-      `profile_${user.email}`,
-
+      "profile",
       JSON.stringify(profile)
-
     );
 
-    alert(
-      "Profile berhasil disimpan ✅"
-    );
+    alert("Profile berhasil disimpan 🚀");
 
     router.push("/student");
+
+  } catch (err) {
+
+    console.log(err);
+
+    alert("Backend tidak terhubung");
   }
+}
 
   return (
 
@@ -145,7 +227,7 @@ export default function ProfilePage() {
         {/* SCHOOL CODE */}
 
         <input
-          placeholder="School Code (SMA1)"
+          placeholder="School Code (SMPN105)"
           value={schoolCode}
           onChange={(e) =>
             setSchoolCode(
@@ -168,7 +250,7 @@ export default function ProfilePage() {
           className="w-full p-4 border rounded-2xl mb-4"
         />
 
-        {/* NAMA */}
+        {/* NAME */}
 
         <input
           placeholder="Nama Lengkap"
@@ -181,9 +263,10 @@ export default function ProfilePage() {
           className="w-full p-4 border rounded-2xl mb-4"
         />
 
-        {/* UMUR */}
+        {/* AGE */}
 
         <input
+          type="number"
           placeholder="Umur"
           value={age}
           onChange={(e) =>
@@ -194,9 +277,10 @@ export default function ProfilePage() {
           className="w-full p-4 border rounded-2xl mb-4"
         />
 
-        {/* TINGGI */}
+        {/* HEIGHT */}
 
         <input
+          type="number"
           placeholder="Tinggi Badan (cm)"
           value={height}
           onChange={(e) =>
@@ -207,9 +291,10 @@ export default function ProfilePage() {
           className="w-full p-4 border rounded-2xl mb-4"
         />
 
-        {/* BERAT */}
+        {/* WEIGHT */}
 
         <input
+          type="number"
           placeholder="Berat Badan (kg)"
           value={weight}
           onChange={(e) =>
@@ -224,10 +309,13 @@ export default function ProfilePage() {
 
         <button
           onClick={saveProfile}
-          className="w-full bg-blue-500 text-white p-4 rounded-2xl font-bold"
+          disabled={loading}
+          className="w-full bg-blue-500 text-white p-4 rounded-2xl font-bold disabled:opacity-50"
         >
 
-          Simpan Profile 🚀
+          {loading
+            ? "Menyimpan..."
+            : "Simpan Profile 🚀"}
 
         </button>
 

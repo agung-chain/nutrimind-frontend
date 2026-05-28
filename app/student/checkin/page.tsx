@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { useEffect }
-from "react";
+import { useState, useEffect } from "react";
 
-import { supabase }
-from "@/lib/supabase";
 import StudentBottomNav
 from "@/components/StudentBottomNav";
+
 export default function CheckinPage() {
+
+  // =========================
+  // STATES
+  // =========================
+
+  const [profile, setProfile] =
+    useState<any>(null);
 
   const [mood, setMood] =
     useState<number>(5);
@@ -22,73 +26,70 @@ export default function CheckinPage() {
   const [stress, setStress] =
     useState<number>(3);
 
+  // 🔥 TAMBAHAN
   const [water, setWater] =
     useState<number>(6);
 
   const [breakfast, setBreakfast] =
     useState<boolean>(true);
 
-  const [user, setUser] =
-    useState<any>(null);
+  const [loading, setLoading] =
+    useState<boolean>(false);
+
+  // =========================
+  // LOAD PROFILE
+  // =========================
 
   useEffect(() => {
 
-    loadUser();
+    const raw =
+      localStorage.getItem("profile");
 
-    }, []);
+    if (!raw) return;
 
-  async function loadUser() {
+    const parsed =
+      JSON.parse(raw);
 
-    const {
-        data: { user }
-    } = await supabase.auth.getUser();
+    setProfile(parsed);
 
-    setUser(user);
-    }  
+  }, []);
+
+  // =========================
+  // SUBMIT CHECKIN
+  // =========================
 
   async function submitCheckin() {
 
-    const profile = JSON.parse(
+  if (!profile?.student_uid) {
 
-        localStorage.getItem(
-            `profile_${user?.email}`
-        ) || "{}"
-    );
+    alert("Profile belum lengkap");
+    return;
+  }
 
-    // 🔥 AUTO GENERATE STUDENT UID
-    const student_uid =
-        `${profile.school_code}-${profile.nis}`;
+  setLoading(true);
+
+  try {
 
     const data = {
 
-      // 🔥 IDENTITAS SISWA
+      // 🔥 IDENTITY
+      student_uid: profile.student_uid,
 
-      school_code:
-        profile.school_code,
+      name: profile.name,
 
-      nis:
-        profile.nis,
+      // ✅ TAMBAHKAN INI
+      school_code: profile.school_code,
+      nis: profile.nis,
 
-      student_uid:
-        student_uid,
+      // 🔥 OPTIONAL PROFILE
+      age: Number(profile.age || 15),
 
-      // 🔥 DATA PROFILE
+      height: Number(profile.height || 170),
 
-      name:
-        profile.name || user?.email,
+      weight: Number(profile.weight || 70),
 
-      age:
-        Number(profile.age || 15),
-
-      height:
-        Number(profile.height || 170),
-
-      weight:
-        Number(profile.weight || 70),
-
-      // 🔥 DATA CHECKIN
-
-      mood: mood,
+      // 🔥 CHECKIN DATA
+      mood,
 
       sleep_hours: sleep,
 
@@ -96,18 +97,16 @@ export default function CheckinPage() {
 
       stress_level: stress,
 
+      // 🔥 TAMBAHAN
       water_intake: water,
 
-      breakfast: breakfast
-
+      breakfast
     };
 
-    // 🔥 KIRIM KE BACKEND
+    console.log(data);
 
     const response = await fetch(
-
       `${process.env.NEXT_PUBLIC_API_URL}/checkin`,
-
       {
         method: "POST",
 
@@ -124,91 +123,93 @@ export default function CheckinPage() {
     console.log(result);
 
     alert("Check-in berhasil 🚀");
+
+  } catch (err) {
+
+    console.log(err);
+
+    alert("Gagal submit check-in");
+
+  } finally {
+
+    setLoading(false);
+  }
 }
 
   return (
 
     <div className="min-h-screen bg-gray-100 p-6 pb-24">
 
-      <h1 className="text-3xl font-bold mb-6">
+      {/* HEADER */}
 
-        Daily Wellness Check-In
+      <div className="mb-6">
 
-      </h1>
+        <h1 className="text-3xl font-bold">
+          Daily Wellness Check-In
+        </h1>
+
+        <p className="text-gray-500 mt-2">
+          Halo {profile?.name || "Siswa"} 👋
+        </p>
+
+      </div>
 
       {/* MOOD */}
 
       <div className="bg-white p-6 rounded-3xl shadow mb-6">
 
         <h2 className="text-xl font-bold">
-
           Bagaimana mood kamu hari ini?
-
         </h2>
 
         <div className="grid grid-cols-5 gap-3 mt-6">
 
           <button
             onClick={() => setMood(10)}
-            className={`
-              p-4 rounded-2xl text-4xl transition-all duration-200
-
-              ${mood === 10
-                ? "bg-yellow-400 scale-110 ring-4 ring-yellow-300 shadow-xl"
-                : "bg-yellow-100"}
-            `}
+            className={`p-4 rounded-2xl text-4xl transition-all duration-200
+            ${mood === 10
+              ? "bg-yellow-400 scale-110 ring-4 ring-yellow-300 shadow-xl"
+              : "bg-yellow-100"}`}
           >
             😄
           </button>
 
           <button
             onClick={() => setMood(8)}
-            className={`
-              p-4 rounded-2xl text-4xl transition-all duration-200
-
-              ${mood === 8
-                ? "bg-green-400 scale-110 ring-4 ring-green-300 shadow-xl"
-                : "bg-green-100"}
-            `}
+            className={`p-4 rounded-2xl text-4xl transition-all duration-200
+            ${mood === 8
+              ? "bg-green-400 scale-110 ring-4 ring-green-300 shadow-xl"
+              : "bg-green-100"}`}
           >
             🙂
           </button>
 
           <button
             onClick={() => setMood(5)}
-            className={`
-              p-4 rounded-2xl text-4xl transition-all duration-200
-
-              ${mood === 5
-                ? "bg-gray-400 scale-110 ring-4 ring-gray-300 shadow-xl"
-                : "bg-gray-100"}
-            `}
+            className={`p-4 rounded-2xl text-4xl transition-all duration-200
+            ${mood === 5
+              ? "bg-gray-400 scale-110 ring-4 ring-gray-300 shadow-xl"
+              : "bg-gray-100"}`}
           >
             😐
           </button>
 
           <button
             onClick={() => setMood(3)}
-            className={`
-              p-4 rounded-2xl text-4xl transition-all duration-200
-
-              ${mood === 3
-                ? "bg-orange-400 scale-110 ring-4 ring-orange-300 shadow-xl"
-                : "bg-orange-100"}
-            `}
+            className={`p-4 rounded-2xl text-4xl transition-all duration-200
+            ${mood === 3
+              ? "bg-orange-400 scale-110 ring-4 ring-orange-300 shadow-xl"
+              : "bg-orange-100"}`}
           >
             😔
           </button>
 
           <button
             onClick={() => setMood(1)}
-            className={`
-              p-4 rounded-2xl text-4xl transition-all duration-200
-
-              ${mood === 1
-                ? "bg-red-400 scale-110 ring-4 ring-red-300 shadow-xl"
-                : "bg-red-100"}
-            `}
+            className={`p-4 rounded-2xl text-4xl transition-all duration-200
+            ${mood === 1
+              ? "bg-red-400 scale-110 ring-4 ring-red-300 shadow-xl"
+              : "bg-red-100"}`}
           >
             😭
           </button>
@@ -222,22 +223,17 @@ export default function CheckinPage() {
       <div className="bg-white p-6 rounded-3xl shadow mb-6">
 
         <h2 className="text-xl font-bold">
-
           Berapa jam tidur kamu?
-
         </h2>
 
         <div className="grid grid-cols-4 gap-3 mt-6">
 
           <button
             onClick={() => setSleep(4)}
-            className={`
-              p-4 rounded-2xl transition-all duration-200
-
-              ${sleep === 4
-                ? "bg-red-400 scale-105 ring-4 ring-red-300 shadow-xl"
-                : "bg-red-100"}
-            `}
+            className={`p-4 rounded-2xl transition-all duration-200
+            ${sleep === 4
+              ? "bg-red-400 scale-105 ring-4 ring-red-300 shadow-xl"
+              : "bg-red-100"}`}
           >
             😪
             <p>&lt; 5 Jam</p>
@@ -245,13 +241,10 @@ export default function CheckinPage() {
 
           <button
             onClick={() => setSleep(6)}
-            className={`
-              p-4 rounded-2xl transition-all duration-200
-
-              ${sleep === 6
-                ? "bg-orange-400 scale-105 ring-4 ring-orange-300 shadow-xl"
-                : "bg-orange-100"}
-            `}
+            className={`p-4 rounded-2xl transition-all duration-200
+            ${sleep === 6
+              ? "bg-orange-400 scale-105 ring-4 ring-orange-300 shadow-xl"
+              : "bg-orange-100"}`}
           >
             😴
             <p>6 Jam</p>
@@ -259,13 +252,10 @@ export default function CheckinPage() {
 
           <button
             onClick={() => setSleep(8)}
-            className={`
-              p-4 rounded-2xl transition-all duration-200
-
-              ${sleep === 8
-                ? "bg-green-400 scale-105 ring-4 ring-green-300 shadow-xl"
-                : "bg-green-100"}
-            `}
+            className={`p-4 rounded-2xl transition-all duration-200
+            ${sleep === 8
+              ? "bg-green-400 scale-105 ring-4 ring-green-300 shadow-xl"
+              : "bg-green-100"}`}
           >
             😊
             <p>8 Jam</p>
@@ -273,13 +263,10 @@ export default function CheckinPage() {
 
           <button
             onClick={() => setSleep(9)}
-            className={`
-              p-4 rounded-2xl transition-all duration-200
-
-              ${sleep === 9
-                ? "bg-blue-400 scale-105 ring-4 ring-blue-300 shadow-xl"
-                : "bg-blue-100"}
-            `}
+            className={`p-4 rounded-2xl transition-all duration-200
+            ${sleep === 9
+              ? "bg-blue-400 scale-105 ring-4 ring-blue-300 shadow-xl"
+              : "bg-blue-100"}`}
           >
             🌟
             <p>9+ Jam</p>
@@ -293,176 +280,130 @@ export default function CheckinPage() {
 
       <div className="bg-white p-6 rounded-3xl shadow mb-6">
 
-          <h2 className="text-xl font-bold mb-2">
+        <h2 className="text-xl font-bold mb-2">
+          Hari ini pikiran kamu lagi gimana?
+        </h2>
 
-            Hari ini pikiran kamu lagi gimana?
+        <p className="text-gray-500 text-sm">
+          Pilih emoji yang paling menggambarkan kondisi kamu ✨
+        </p>
 
-          </h2>
+        <div className="grid grid-cols-4 gap-3 mt-6">
 
-          <p className="text-gray-500 text-sm">
+          <button
+            onClick={() => setStress(1)}
+            className={`p-4 rounded-2xl transition-all duration-200
+            ${stress === 1
+              ? "bg-green-400 scale-105 ring-4 ring-green-300 shadow-xl text-white"
+              : "bg-green-100"}`}
+          >
+            <div className="text-4xl mb-2">
+              😌
+            </div>
 
-            Pilih emoji yang paling menggambarkan kondisi kamu ✨
+            <p className="text-sm font-bold">
+              Santai
+            </p>
+          </button>
 
-          </p>
+          <button
+            onClick={() => setStress(4)}
+            className={`p-4 rounded-2xl transition-all duration-200
+            ${stress === 4
+              ? "bg-yellow-400 scale-105 ring-4 ring-yellow-300 shadow-xl text-white"
+              : "bg-yellow-100"}`}
+          >
+            <div className="text-4xl mb-2">
+              🙂
+            </div>
 
-          <div className="grid grid-cols-4 gap-3 mt-6">
+            <p className="text-sm font-bold">
+              Biasa aja
+            </p>
+          </button>
 
-            {/* TENANG */}
+          <button
+            onClick={() => setStress(7)}
+            className={`p-4 rounded-2xl transition-all duration-200
+            ${stress === 7
+              ? "bg-orange-400 scale-105 ring-4 ring-orange-300 shadow-xl text-white"
+              : "bg-orange-100"}`}
+          >
+            <div className="text-4xl mb-2">
+              😰
+            </div>
 
-            <button
-              onClick={() => setStress(1)}
-              className={`
-                p-4 rounded-2xl transition-all duration-200
+            <p className="text-sm font-bold">
+              Banyak Pikiran
+            </p>
+          </button>
 
-                ${stress === 1
-                  ? "bg-green-400 scale-105 ring-4 ring-green-300 shadow-xl text-white"
-                  : "bg-green-100"}
-              `}
-            >
+          <button
+            onClick={() => setStress(10)}
+            className={`p-4 rounded-2xl transition-all duration-200
+            ${stress === 10
+              ? "bg-red-400 scale-105 ring-4 ring-red-300 shadow-xl text-white"
+              : "bg-red-100"}`}
+          >
+            <div className="text-4xl mb-2">
+              😭
+            </div>
 
-              <div className="text-4xl mb-2">
-                😌
-              </div>
-
-              <p className="text-sm font-bold">
-                Santai
-              </p>
-
-            </button>
-
-            {/* NORMAL */}
-
-            <button
-              onClick={() => setStress(4)}
-              className={`
-                p-4 rounded-2xl transition-all duration-200
-
-                ${stress === 4
-                  ? "bg-yellow-400 scale-105 ring-4 ring-yellow-300 shadow-xl text-white"
-                  : "bg-yellow-100"}
-              `}
-            >
-
-              <div className="text-4xl mb-2">
-                🙂
-              </div>
-
-              <p className="text-sm font-bold">
-                Biasa aja
-              </p>
-
-            </button>
-
-            {/* BANYAK PIKIRAN */}
-
-            <button
-              onClick={() => setStress(7)}
-              className={`
-                p-4 rounded-2xl transition-all duration-200
-
-                ${stress === 7
-                  ? "bg-orange-400 scale-105 ring-4 ring-orange-300 shadow-xl text-white"
-                  : "bg-orange-100"}
-              `}
-            >
-
-              <div className="text-4xl mb-2">
-                😰
-              </div>
-
-              <p className="text-sm font-bold">
-                Banyak Pikiran
-              </p>
-
-            </button>
-
-            {/* BERAT */}
-
-            <button
-              onClick={() => setStress(10)}
-              className={`
-                p-4 rounded-2xl transition-all duration-200
-
-                ${stress === 10
-                  ? "bg-red-400 scale-105 ring-4 ring-red-300 shadow-xl text-white"
-                  : "bg-red-100"}
-              `}
-            >
-
-              <div className="text-4xl mb-2">
-                😭
-              </div>
-
-              <p className="text-sm font-bold">
-                Berat
-              </p>
-
-            </button>
-
-          </div>
+            <p className="text-sm font-bold">
+              Berat
+            </p>
+          </button>
 
         </div>
+
+      </div>
 
       {/* EXERCISE */}
 
       <div className="bg-white p-6 rounded-3xl shadow mb-6">
 
         <h2 className="text-xl font-bold">
-
           Aktivitas olahraga?
-
         </h2>
 
         <div className="grid grid-cols-4 gap-3 mt-6">
 
           <button
             onClick={() => setExercise(0)}
-            className={`
-              p-4 rounded-2xl text-3xl transition-all duration-200
-
-              ${exercise === 0
-                ? "bg-gray-400 scale-105 ring-4 ring-gray-300 shadow-xl"
-                : "bg-gray-100"}
-            `}
+            className={`p-4 rounded-2xl text-3xl transition-all duration-200
+            ${exercise === 0
+              ? "bg-gray-400 scale-105 ring-4 ring-gray-300 shadow-xl"
+              : "bg-gray-100"}`}
           >
             🛌
           </button>
 
           <button
             onClick={() => setExercise(20)}
-            className={`
-              p-4 rounded-2xl text-3xl transition-all duration-200
-
-              ${exercise === 20
-                ? "bg-green-400 scale-105 ring-4 ring-green-300 shadow-xl"
-                : "bg-green-100"}
-            `}
+            className={`p-4 rounded-2xl text-3xl transition-all duration-200
+            ${exercise === 20
+              ? "bg-green-400 scale-105 ring-4 ring-green-300 shadow-xl"
+              : "bg-green-100"}`}
           >
             🚶
           </button>
 
           <button
             onClick={() => setExercise(40)}
-            className={`
-              p-4 rounded-2xl text-3xl transition-all duration-200
-
-              ${exercise === 40
-                ? "bg-blue-400 scale-105 ring-4 ring-blue-300 shadow-xl"
-                : "bg-blue-100"}
-            `}
+            className={`p-4 rounded-2xl text-3xl transition-all duration-200
+            ${exercise === 40
+              ? "bg-blue-400 scale-105 ring-4 ring-blue-300 shadow-xl"
+              : "bg-blue-100"}`}
           >
             🏃
           </button>
 
           <button
             onClick={() => setExercise(60)}
-            className={`
-              p-4 rounded-2xl text-3xl transition-all duration-200
-
-              ${exercise === 60
-                ? "bg-red-400 scale-105 ring-4 ring-red-300 shadow-xl"
-                : "bg-red-100"}
-            `}
+            className={`p-4 rounded-2xl text-3xl transition-all duration-200
+            ${exercise === 60
+              ? "bg-red-400 scale-105 ring-4 ring-red-300 shadow-xl"
+              : "bg-red-100"}`}
           >
             🔥
           </button>
@@ -476,61 +417,47 @@ export default function CheckinPage() {
       <div className="bg-white p-6 rounded-3xl shadow mb-6">
 
         <h2 className="text-xl font-bold">
-
           Minum air hari ini?
-
         </h2>
 
         <div className="grid grid-cols-4 gap-3 mt-6">
 
           <button
             onClick={() => setWater(2)}
-            className={`
-              p-4 rounded-2xl text-3xl transition-all duration-200
-
-              ${water === 2
-                ? "bg-yellow-400 scale-105 ring-4 ring-yellow-300 shadow-xl"
-                : "bg-yellow-100"}
-            `}
+            className={`p-4 rounded-2xl text-3xl transition-all duration-200
+            ${water === 2
+              ? "bg-yellow-400 scale-105 ring-4 ring-yellow-300 shadow-xl"
+              : "bg-yellow-100"}`}
           >
             🥤
           </button>
 
           <button
             onClick={() => setWater(4)}
-            className={`
-              p-4 rounded-2xl text-3xl transition-all duration-200
-
-              ${water === 4
-                ? "bg-orange-400 scale-105 ring-4 ring-orange-300 shadow-xl"
-                : "bg-orange-100"}
-            `}
+            className={`p-4 rounded-2xl text-3xl transition-all duration-200
+            ${water === 4
+              ? "bg-orange-400 scale-105 ring-4 ring-orange-300 shadow-xl"
+              : "bg-orange-100"}`}
           >
             🥛
           </button>
 
           <button
             onClick={() => setWater(7)}
-            className={`
-              p-4 rounded-2xl text-3xl transition-all duration-200
-
-              ${water === 7
-                ? "bg-blue-400 scale-105 ring-4 ring-blue-300 shadow-xl"
-                : "bg-blue-100"}
-            `}
+            className={`p-4 rounded-2xl text-3xl transition-all duration-200
+            ${water === 7
+              ? "bg-blue-400 scale-105 ring-4 ring-blue-300 shadow-xl"
+              : "bg-blue-100"}`}
           >
             💧
           </button>
 
           <button
             onClick={() => setWater(10)}
-            className={`
-              p-4 rounded-2xl text-3xl transition-all duration-200
-
-              ${water === 10
-                ? "bg-cyan-400 scale-105 ring-4 ring-cyan-300 shadow-xl"
-                : "bg-cyan-100"}
-            `}
+            className={`p-4 rounded-2xl text-3xl transition-all duration-200
+            ${water === 10
+              ? "bg-cyan-400 scale-105 ring-4 ring-cyan-300 shadow-xl"
+              : "bg-cyan-100"}`}
           >
             🌊
           </button>
@@ -544,35 +471,27 @@ export default function CheckinPage() {
       <div className="bg-white p-6 rounded-3xl shadow mb-6">
 
         <h2 className="text-xl font-bold">
-
           Sudah sarapan?
-
         </h2>
 
         <div className="grid grid-cols-2 gap-4 mt-6">
 
           <button
             onClick={() => setBreakfast(true)}
-            className={`
-              p-6 rounded-2xl text-4xl transition-all duration-200
-
-              ${breakfast
-                ? "bg-green-400 scale-105 ring-4 ring-green-300 shadow-xl"
-                : "bg-green-100"}
-            `}
+            className={`p-6 rounded-2xl text-4xl transition-all duration-200
+            ${breakfast
+              ? "bg-green-400 scale-105 ring-4 ring-green-300 shadow-xl"
+              : "bg-green-100"}`}
           >
             ✅
           </button>
 
           <button
             onClick={() => setBreakfast(false)}
-            className={`
-              p-6 rounded-2xl text-4xl transition-all duration-200
-
-              ${!breakfast
-                ? "bg-red-400 scale-105 ring-4 ring-red-300 shadow-xl"
-                : "bg-red-100"}
-            `}
+            className={`p-6 rounded-2xl text-4xl transition-all duration-200
+            ${!breakfast
+              ? "bg-red-400 scale-105 ring-4 ring-red-300 shadow-xl"
+              : "bg-red-100"}`}
           >
             ❌
           </button>
@@ -585,13 +504,18 @@ export default function CheckinPage() {
 
       <button
         onClick={submitCheckin}
-        className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white p-5 rounded-3xl text-xl font-bold shadow-lg"
+        disabled={loading}
+        className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white p-5 rounded-3xl text-xl font-bold shadow-lg active:scale-95 transition"
       >
 
-        Submit Check-In 🚀
+        {loading
+          ? "Mengirim..."
+          : "Submit Check-In 🚀"}
 
       </button>
-            <StudentBottomNav />
+
+      <StudentBottomNav />
+
     </div>
   );
 }
